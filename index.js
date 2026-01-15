@@ -51,4 +51,4 @@ app.use("/user",userRouter)
 //   console.log(`Server is listening on port ${PORT}`)
 // })
 
-module.exports = app;
+export default app;
