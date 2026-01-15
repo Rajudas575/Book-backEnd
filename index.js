@@ -1,54 +1,40 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import mongoose from 'mongoose'
-import bookRoute from './route/book.route.js'
-import cors from 'cors'
-import userRouter from './route/user.roure.js'
+import express from 'express';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import bookRoute from './route/book.route.js';
+import userRouter from './route/user.roure.js';
+import cors from 'cors';
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
+const app = express();
 
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
+let cachedConnection = null;
 
-//const PORT = process.env.PORT || 4000
+async function connectToMongoDB() {
+  if (cachedConnection) return cachedConnection;
 
+  cachedConnection = await mongoose.connect(process.env.MONGODB_URL, {
+    dbName: "readyforread_db",
+  });
 
-//MongoDb Connection
-  // mongoose.connect(process.env.MONGODB_URL,{dbName:"readyforread_db"})
-  // .then(() => console.log("Database connected."))
-  // .catch(error => console.log("Database connection faild", error))
-
-  let isConnected = false;
-  async function connectToMongoDB(){
-    try {
-      await mongoose.connect(process.env.MONGODB_URL,{
-        useNewUrlParser:true,
-        useUnifiedTopology:true
-      });
-      isConnected = true;
-      console.log('Connected to MongoDB');
-    } catch (error) {
-      console.error('Error connecting to MongoDB:', error);
-    }
-  }
+  console.log("MongoDB connected");
+  return cachedConnection;
+}
 
 app.use(async (req, res, next) => {
-  if(!isConnected){
-    connectToMongoDB()
-  }
+  await connectToMongoDB();
   next();
 });
 
-//defining route
-app.use("/book",bookRoute)
-app.use("/user",userRouter)
-app.use("/user",userRouter)
+app.get("/", (req, res) => {
+  res.json({ status: "Backend running" });
+});
 
-// app.listen(PORT, () => {
-//   console.log(`Server is listening on port ${PORT}`)
-// })
+app.use("/book", bookRoute);
+app.use("/user", userRouter);
 
 export default app;
